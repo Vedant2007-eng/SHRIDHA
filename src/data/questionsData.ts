@@ -1,0 +1,123 @@
+import { LanguageOption, QuestionData } from '../types/feedback';
+
+export const LANGUAGES: LanguageOption[] = [
+  {
+    id: 'English',
+    name: 'English',
+    nativeName: 'English',
+    code: 'en-IN',
+    description: 'Speak in English',
+  },
+  {
+    id: 'Hindi',
+    name: 'Hindi',
+    nativeName: 'हिन्दी',
+    code: 'hi-IN',
+    description: 'हिन्दी में बोलें',
+  },
+  {
+    id: 'Marathi',
+    name: 'Marathi',
+    nativeName: 'मराठी',
+    code: 'mr-IN',
+    description: 'मराठीत बोला',
+  },
+  {
+    id: 'Telugu',
+    name: 'Telugu',
+    nativeName: 'తెలుగు',
+    code: 'te-IN',
+    description: 'తెలుగులో మాట్లాడండి',
+  },
+  {
+    id: 'Tamil',
+    name: 'Tamil',
+    nativeName: 'தமிழ்',
+    code: 'ta-IN',
+    description: 'தமிழில் பேசுங்கள்',
+  },
+  {
+    id: 'Kannada',
+    name: 'Kannada',
+    nativeName: 'ಕನ್ನಡ',
+    code: 'kn-IN',
+    description: 'ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ',
+  },
+  {
+    id: 'Bengali',
+    name: 'Bengali',
+    nativeName: 'বাংলা',
+    code: 'bn-IN',
+    description: 'বাংলায় বলুন',
+  },
+  {
+    id: 'Other',
+    name: 'Other Languages',
+    nativeName: 'इतर भाषा',
+    code: 'en-US',
+    description: 'Other preferred language',
+  },
+];
+
+export const QUESTIONS: QuestionData[] = [
+  {
+    id: 1,
+    shortTitle: 'Cleanliness & Facilities',
+    category: 'cleanliness',
+    hint: 'Rooms, washrooms, waiting areas, beds, water availability',
+    question: {
+      English: "How would you rate the cleanliness of the hospital and the basic facilities provided?",
+      Hindi: "आप अस्पताल की स्वच्छता और प्रदान की गई बुनियादी सुविधाओं को कैसा आंकेंगे?",
+      Marathi: "तुम्ही रुग्णालयाची स्वच्छता आणि पुरवलेल्या मूलभूत सुविधांना कसे गुण द्याल?",
+      Telugu: "ఆసుపత్రి పరిశుభ్రత మరియు అందించిన ప్రాథమిక సౌకర్యాలను మీరు ఎలా అంచనా వేస్తారు?",
+      Tamil: "மருத்துவமனையின் தூய்மை மற்றும் வழங்கப்பட்ட அடிப்படை வசதிகளை நீங்கள் எவ்வாறு மதிப்பிடுவீர்கள்?",
+      Kannada: "ಆಸ್ಪತ್ರೆಯ ಸ್ವಚ್ಛತೆ ಮತ್ತು ಒದಗಿಸಲಾದ ಮೂಲಭೂತ ಸೌಲಭ್ಯಗಳನ್ನು ನೀವು ಹೇಗೆ ರೇಟ್ ಮಾಡುತ್ತೀರಿ?",
+      Bengali: "হাসপাতালের পরিচ্ছন্নতা এবং প্রদত্ত প্রাথমিক সুবিধাগুলি আপনি কীভাবে মূল্যায়ন করবেন?",
+    },
+  },
+  {
+    id: 2,
+    shortTitle: 'Staff Behaviour & Timeliness',
+    category: 'staffBehaviour',
+    hint: 'Nurses, ward staff politeness, medicine dose schedule',
+    question: {
+      English: "How would you rate the behaviour of the hospital staff and the timeliness of your medicine doses?",
+      Hindi: "अस्पताल के कर्मचारियों के व्यवहार और आपकी दवाओं के समय पर दिए जाने को आप कैसा आंकेंगे?",
+      Marathi: "रुग्णालयातील कर्मचाऱ्यांचे वर्तन आणि औषधांच्या वेळेचे व्यवस्थापन याबद्दल तुमचे काय मत आहे?",
+      Telugu: "ఆసుపత్రి సిబ్బంది ప్రవర్తన మరియు మీ మందుల సమయపాలనను మీరు ఎలా అంచనా వేస్తారు?",
+      Tamil: "மருத்துவமனை ஊழியர்களின் நடத்தை மற்றும் மருந்துகளின் நேரத்தன்மையை எவ்வாறு மதிப்பிடுவீர்கள்?",
+      Kannada: "ಆಸ್ಪತ್ರೆ ಸಿಬ್ಬಂದಿಯ ನಡವಳಿಕೆ ಮತ್ತು ಔಷಧಗಳ ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ನೀಡುವುದನ್ನು ಹೇಗೆ ರೇಟ್ ಮಾಡುತ್ತೀರಿ?",
+      Bengali: "হাসপাতাল কর্মীদের আচরণ এবং ওষুধের সময়ানুবর্তিতা আপনি কেমন বলবেন?",
+    },
+  },
+  {
+    id: 3,
+    shortTitle: 'Doctor Treatment & Service',
+    category: 'doctorTreatment',
+    hint: 'Doctor communication, diagnosis explanation, care attentiveness',
+    question: {
+      English: "How satisfied are you with the treatment given by the doctors and the overall service you received?",
+      Hindi: "डॉक्टरों द्वारा किए गए इलाज और आपको मिली समग्र सेवा से आप कितने संतुष्ट हैं?",
+      Marathi: "डॉक्टरांनी केलेल्या उपचारांबद्दल आणि मिळालेल्या एकूण सेवेबद्दल आपण किती समाधानी आहात?",
+      Telugu: "వైద్యులు అందించిన చికిత్స మరియు మొత్తం సేవతో మీరు ఎంత సంతృప్తి చెందారు?",
+      Tamil: "மருத்துவர்கள் அளித்த சிகிச்சை மற்றும் ஒட்டுமொத்த சேவையில் நீங்கள் எவ்வளவு திருப்தி அடைகிறீர்கள்?",
+      Kannada: "ವೈದ್ಯರು ನೀಡಿದ ಚಿಕಿತ್ಸೆ ಮತ್ತು ಒಟ್ಟಾರೆ ಸೇವೆಯ ಬಗ್ಗೆ ನೀವು ಎಷ್ಟು ತೃಪ್ತರಾಗಿದ್ದೀರಿ?",
+      Bengali: "ডাক্তারদের দ্বারা প্রদত্ত চিকিৎসা এবং সামগ্রিক সেবায় আপনি কতটা সন্তুষ্ট?",
+    },
+  },
+  {
+    id: 4,
+    shortTitle: 'Appreciation & Suggestions',
+    category: 'general',
+    hint: 'Mention staff names you liked/disliked, suggestions for improvement',
+    question: {
+      English: "Which staff member's service did you appreciate most, and with whose service were you dissatisfied (names, if any)? Please also share any suggestions to improve the hospital?",
+      Hindi: "किस कर्मचारी की सेवा की आपने सबसे अधिक सराहना की, और किसकी सेवा से आप असंतुष्ट थे (यदि कोई नाम हो)? कृपया अस्पताल को बेहतर बनाने के लिए कोई सुझाव भी साझा करें?",
+      Marathi: "कोणत्या कर्मचाऱ्याच्या सेवेचे तुम्ही सर्वात जास्त कौतुक केले आणि कोणाच्या सेवेबद्दल तुम्ही असंतुष्ट होता (नावे असल्यास)? कृपया रुग्णालय सुधारण्यासाठी काही सूचना असल्यास सांगा?",
+      Telugu: "ఏ సిబ్బంది సేవను మీరు ఎక్కువగా అభినందించారు, మరియు ఎవరి సేవతో మీరు అసంతృప్తి చెందారు? ఆసుపత్రిని మెరుగుపరచడానికి ఏవైనా సూచనలను కూడా పంచుకోండి?",
+      Tamil: "எந்த ஊழியரின் சேவையை நீங்கள் மிகவும் பாராட்டினீர்கள், யாருடைய சேவையில் அதிருப்தி அடைந்தீர்கள்? மருத்துவமனையை மேம்படுத்த பரிந்துரைகளையும் பகிருங்கள்?",
+      Kannada: "ಯಾವ ಸಿಬ್ಬಂದಿಯ ಸೇವೆಯನ್ನು ನೀವು ಹೆಚ್ಚು ಮೆಚ್ಚಿದ್ದೀರಿ ಮತ್ತು ಯಾರ ಸೇವೆಯಿಂದ ನೀವು ಅಸಂತೃಪ್ತರಾಗಿದ್ದೀರಿ? ಆಸ್ಪತ್ರೆ ಸುಧಾರಿಸಲು ಸಲಹೆಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ?",
+      Bengali: "কোন কর্মীর সেবার আপনি সবচেয়ে বেশি প্রশংসা করেছেন এবং কার সেবায় আপনি অসন্তুষ্ট ছিলেন? হাসপাতাল উন্নত করতে কোনো পরামর্শ শেয়ার করুন?",
+    },
+  },
+];
