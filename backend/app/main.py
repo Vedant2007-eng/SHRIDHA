@@ -1,4 +1,3 @@
-
 import logging
 from contextlib import asynccontextmanager
 
@@ -25,7 +24,6 @@ async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
     logger.info("Initializing CareVoice Backend...")
     DatabaseManager.connect()
-
     try:
         yield
     finally:
@@ -47,9 +45,9 @@ app = FastAPI(
 )
 
 
+# CORS configuration. Preserve origins configured in app.config.py and add
+# local development origins plus the currently observed deployed frontend.
 # CORS configuration
-# Preserve origins configured in app.config.py and explicitly allow
-# the local Vite frontend used during development.
 configured_origins = settings.get_cors_origins()
 
 if isinstance(configured_origins, str):
@@ -62,15 +60,15 @@ else:
     configured_origins = list(configured_origins or [])
 
 local_frontend_origins = [
+    # Local development
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+
+    # Deployed CareVoice frontend
+    "https://shridha-31f5-7rm2emcll-vedant-kubde-s-projects.vercel.app",
 ]
 
-origins = list(
-    dict.fromkeys(
-        configured_origins + local_frontend_origins
-    )
-)
+origins = list(dict.fromkeys(configured_origins + frontend_origins))
 
 logger.info("Configured CORS origins: %s", origins)
 
@@ -80,19 +78,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
-
+)   
 
 # Global exception handlers
-
-
 @app.exception_handler(HTTPException)
-async def http_exception_handler(
-    request: Request,
-    exc: HTTPException,
-):
+async def http_exception_handler(request: Request, exc: HTTPException):
     detail = exc.detail
-
     if isinstance(detail, dict):
         code = detail.get("code", "HTTP_ERROR")
         message = detail.get("message", "An error occurred.")
@@ -117,15 +108,12 @@ async def http_exception_handler(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError,
+    request: Request, exc: RequestValidationError
 ):
     errors = exc.errors()
     first_error = errors[0] if errors else {}
     message = first_error.get("msg", "Validation error")
-    location = " -> ".join(
-        str(item) for item in first_error.get("loc", [])
-    )
+    location = " -> ".join(str(item) for item in first_error.get("loc", []))
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -133,11 +121,7 @@ async def validation_exception_handler(
             "success": False,
             "error": {
                 "code": "VALIDATION_ERROR",
-                "message": (
-                    f"{message} at {location}"
-                    if location
-                    else message
-                ),
+                "message": f"{message} at {location}" if location else message,
                 "details": {"errors": errors},
             },
         },
@@ -145,16 +129,8 @@ async def validation_exception_handler(
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(
-    request: Request,
-    exc: Exception,
-):
-    logger.error(
-        "Unhandled server error: %s",
-        exc,
-        exc_info=True,
-    )
-
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled server error: %s", exc, exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -162,8 +138,7 @@ async def general_exception_handler(
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
                 "message": (
-                    "An unexpected server error occurred. "
-                    "Please try again later."
+                    "An unexpected server error occurred. Please try again later."
                 ),
             },
         },
