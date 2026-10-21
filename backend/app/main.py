@@ -68,7 +68,7 @@ local_frontend_origins = [
     "https://shridha-31f5-7rm2emcll-vedant-kubde-s-projects.vercel.app",
 ]
 
-origins = list(dict.fromkeys(configured_origins + frontend_origins))
+origins = list(dict.fromkeys(configured_origins + local_frontend_origins))
 
 logger.info("Configured CORS origins: %s", origins)
 
