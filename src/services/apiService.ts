@@ -14,7 +14,7 @@ import type {
 
 const API_BASE_URL = (
 
-  import.meta.env.VITE_API_BASE_URL || 'https://shridha-iv1gdj1gt-vedant-kubde-s-projects.vercel.app'
+  import.meta.env.VITE_API_BASE_URL || 'https://shridha-mauve.vercel.app'
 
 ).replace(/\/+$/, '');
 
