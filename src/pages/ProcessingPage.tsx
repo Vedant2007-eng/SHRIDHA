@@ -1,65 +1,182 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  RefreshCw,
+  Loader2,
+  Sparkles,
+  BrainCircuit,
+  FileCheck2,
+  BarChart3,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
+
 import { Header } from '../components/Header';
 import { ProgressTracker } from '../components/ProgressTracker';
 import { useFeedback } from '../context/FeedbackContext';
-import { 
-  Check, 
-  Loader2, 
-  Sparkles, 
-  BrainCircuit, 
-  FileCheck2, 
-  BarChart3, 
-  Search,
-  CheckCircle2
-} from 'lucide-react';
+import type { FeedbackReport } from '../types/feedback';
 
 export const ProcessingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { runAnalysis, processingProgress, setProcessingProgress } = useFeedback();
 
-  const [currentStageIndex, setCurrentStageIndex] = useState<number>(0);
+  const {
+    runAnalysis,
+    processingProgress,
+    setProcessingProgress,
+  } = useFeedback();
+
+  const [currentStageIndex, setCurrentStageIndex] =
+    useState<number>(0);
+
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
+
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  // Keep the same analysis promise if React Strict Mode reruns
+  // the effect during development.
+  const analysisPromiseRef =
+    useRef<Promise<FeedbackReport> | null>(null);
 
   const stages = [
-    { label: 'Transcribing your responses', icon: Search },
-    { label: 'Analyzing feedback content', icon: BrainCircuit },
-    { label: 'Calculating hospital scores', icon: BarChart3 },
-    { label: 'Identifying key issues & suggestions', icon: Sparkles },
-    { label: 'Generating your report', icon: FileCheck2 },
+    {
+      label: 'Validating patient answers',
+      icon: Search,
+    },
+    {
+      label: 'Saving responses to backend',
+      icon: FileCheck2,
+    },
+    {
+      label: 'Analyzing patient feedback',
+      icon: BrainCircuit,
+    },
+    {
+      label: 'Validating report results',
+      icon: BarChart3,
+    },
+    {
+      label: 'Preparing your report',
+      icon: Sparkles,
+    },
   ];
 
   useEffect(() => {
+    let active = true;
     let progress = 0;
+    let navigationTimer: ReturnType<typeof setTimeout> | undefined;
+
+    setErrorMessage(null);
     setProcessingProgress(0);
+    setCurrentStageIndex(0);
 
-    // Run the AI analysis
-    runAnalysis();
+    // This progress animation is indicative only. The backend does not
+    // expose individual processing-stage completion events.
+    const progressInterval = setInterval(() => {
+      if (!active) return;
 
-    // 5-second smooth progression timer
-    const interval = setInterval(() => {
-      progress += 2;
-      if (progress > 100) progress = 100;
+      progress = Math.min(progress + 2, 90);
+
       setProcessingProgress(progress);
 
-      const stage = Math.min(4, Math.floor(progress / 20));
+      // Keep the final stage incomplete until analysis succeeds.
+      const stage = Math.min(
+        3,
+        Math.floor(progress / 25)
+      );
+
       setCurrentStageIndex(stage);
+    }, 100);
 
-      if (progress >= 100) {
-        clearInterval(interval);
-        // Small delay at 100% before transitioning to /report
-        setTimeout(() => {
-          navigate('/report');
-        }, 600);
+    // Create one analysis request per attempt.
+    if (!analysisPromiseRef.current) {
+      analysisPromiseRef.current = runAnalysis();
+    }
+
+    const analysisTask = analysisPromiseRef.current;
+
+    analysisTask
+      .then((generatedReport) => {
+        if (!active) return;
+
+        if (!generatedReport) {
+          throw new Error(
+            'The backend did not return a valid report.'
+          );
+        }
+
+        clearInterval(progressInterval);
+
+        setProcessingProgress(100);
+        setCurrentStageIndex(4);
+        setErrorMessage(null);
+
+        // Navigate only after a successful analysis.
+        navigationTimer = setTimeout(() => {
+          if (active) {
+            navigate('/report', { replace: true });
+          }
+        }, 500);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+
+        clearInterval(progressInterval);
+
+        // Do not show a completed progress bar on failure.
+        setProcessingProgress(progress);
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred while generating your report.';
+
+        setErrorMessage(message);
+
+        console.error(
+          'Patient feedback analysis failed:',
+          error
+        );
+      });
+
+    return () => {
+      active = false;
+      clearInterval(progressInterval);
+
+      if (navigationTimer !== undefined) {
+        clearTimeout(navigationTimer);
       }
-    }, 90); // ~4.5-5 seconds total
+    };
+  }, [
+    navigate,
+    retryCount,
+    runAnalysis,
+    setProcessingProgress,
+  ]);
 
-    return () => clearInterval(interval);
-  }, []);
+  const handleRetry = () => {
+    // Allow the next effect to create a new request.
+    analysisPromiseRef.current = null;
+
+    setErrorMessage(null);
+    setProcessingProgress(0);
+    setCurrentStageIndex(0);
+
+    setRetryCount((previous) => previous + 1);
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-hospital-bg text-hospital-textLight">
       <Header showLanguageBadge={true} />
+
       <ProgressTracker currentStep="processing" />
 
       <main className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 py-8">
@@ -69,51 +186,132 @@ export const ProcessingPage: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="w-full glass-panel rounded-3xl p-8 sm:p-12 border border-hospital-border/40 shadow-glow-md flex flex-col items-center text-center relative overflow-hidden"
         >
-          {/* Ambient Glow */}
+          {/* Ambient glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-hospital-accent/15 rounded-full blur-3xl pointer-events-none" />
 
-          {/* AI Processor Pulsing Icon */}
+          {/* Processing icon */}
           <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
-              className="absolute inset-0 rounded-2xl border-2 border-dashed border-hospital-accent/50"
-            />
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-hospital-crimson via-hospital-burgundy to-hospital-dark border border-hospital-accent flex items-center justify-center shadow-glow-sm">
-              <BrainCircuit className="w-8 h-8 text-hospital-warm animate-pulse" />
+            {!errorMessage && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 8,
+                  ease: 'linear',
+                }}
+                className="absolute inset-0 rounded-2xl border-2 border-dashed border-hospital-accent/50"
+              />
+            )}
+
+            <div
+              className={`w-16 h-16 rounded-2xl border flex items-center justify-center ${errorMessage
+                  ? 'bg-red-950/50 border-red-500/60'
+                  : 'bg-gradient-to-tr from-hospital-crimson via-hospital-burgundy to-hospital-dark border-hospital-accent shadow-glow-sm'
+                }`}
+            >
+              {errorMessage ? (
+                <AlertCircle className="w-8 h-8 text-red-400" />
+              ) : (
+                <BrainCircuit className="w-8 h-8 text-hospital-warm animate-pulse" />
+              )}
             </div>
           </div>
 
-          {/* Headings */}
+          {/* Heading */}
           <h2 className="font-heading font-extrabold text-3xl sm:text-4xl text-white tracking-tight mb-2">
-            Analyzing Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-hospital-accent to-hospital-warm text-glow">Feedback</span>
+            {errorMessage ? (
+              'Report Generation Failed'
+            ) : (
+              <>
+                Analyzing Your{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-hospital-accent to-hospital-warm text-glow">
+                  Feedback
+                </span>
+              </>
+            )}
           </h2>
 
           <p className="text-sm sm:text-base text-hospital-textMuted max-w-lg mb-8 leading-relaxed">
-            Please wait while our AI system processes your voice responses and generates the comprehensive hospital report.
+            {errorMessage
+              ? 'A reliable report could not be generated from the backend. No replacement sample report has been displayed.'
+              : 'Your submitted responses are being sent for analysis. The report will open after the backend returns a valid result.'}
           </p>
 
-          {/* Progress Percentage & Bar */}
+          {/* Error panel */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="w-full max-w-md mb-8 rounded-xl border border-red-500/40 bg-red-950/30 p-4 text-left"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+
+                <div>
+                  <h3 className="text-sm font-bold text-red-300 mb-1">
+                    What went wrong?
+                  </h3>
+
+                  <p className="text-sm text-red-200/90 break-words">
+                    {errorMessage}
+                  </p>
+
+                  <p className="text-xs text-hospital-textMuted mt-3">
+                    Check the backend terminal for additional details.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Progress percentage and bar */}
           <div className="w-full max-w-md mb-8">
             <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider mb-2">
-              <span className="text-hospital-textMuted">AI Processing</span>
-              <span className="text-hospital-warm font-heading text-base">{processingProgress}%</span>
+              <span className="text-hospital-textMuted">
+                {errorMessage
+                  ? 'Processing stopped'
+                  : 'Processing'}
+              </span>
+
+              <span
+                className={`font-heading text-base ${errorMessage
+                    ? 'text-red-400'
+                    : 'text-hospital-warm'
+                  }`}
+              >
+                {processingProgress}%
+              </span>
             </div>
 
             <div className="w-full h-3 rounded-full bg-hospital-darker/90 border border-white/5 overflow-hidden p-0.5 shadow-inner">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-hospital-crimson via-hospital-accent to-hospital-warm shadow-glow-sm transition-all duration-100 ease-out"
-                style={{ width: `${processingProgress}%` }}
+                className={`h-full rounded-full transition-all duration-100 ease-out ${errorMessage
+                    ? 'bg-red-500'
+                    : 'bg-gradient-to-r from-hospital-crimson via-hospital-accent to-hospital-warm shadow-glow-sm'
+                  }`}
+                animate={{
+                  width: `${processingProgress}%`,
+                }}
+                transition={{ duration: 0.1 }}
               />
             </div>
           </div>
 
-          {/* 5 Animated Processing Stages */}
+          {/* Processing stages */}
           <div className="w-full max-w-md space-y-3 text-left">
-            {stages.map((stage, idx) => {
-              const isDone = idx < currentStageIndex || processingProgress === 100;
-              const isCurrent = idx === currentStageIndex && processingProgress < 100;
-              const isPending = idx > currentStageIndex && processingProgress < 100;
+            {stages.map((stage, index) => {
+              const isDone =
+                !errorMessage &&
+                processingProgress === 100;
+
+              const isCurrent =
+                !errorMessage &&
+                index === currentStageIndex &&
+                !isDone;
+
+              const isPending =
+                !errorMessage &&
+                index > currentStageIndex &&
+                !isDone;
 
               const StageIcon = stage.icon;
 
@@ -122,28 +320,33 @@ export const ProcessingPage: React.FC = () => {
                   key={stage.label}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-300 ${
-                    isDone
+                  transition={{ delay: index * 0.1 }}
+                  className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-300 ${isDone
                       ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
                       : isCurrent
-                      ? 'bg-hospital-burgundy/80 border-hospital-accent text-white shadow-glow-sm'
-                      : 'bg-hospital-darker/40 border-white/5 text-hospital-textMuted/40'
-                  }`}
+                        ? 'bg-hospital-burgundy/80 border-hospital-accent text-white shadow-glow-sm'
+                        : errorMessage
+                          ? 'bg-red-950/10 border-red-500/10 text-hospital-textMuted/50'
+                          : isPending
+                            ? 'bg-hospital-darker/40 border-white/5 text-hospital-textMuted/40'
+                            : 'bg-hospital-darker/40 border-white/5 text-hospital-textMuted/40'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        isDone
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${isDone
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : isCurrent
-                          ? 'bg-hospital-accent text-white'
-                          : 'bg-white/5 text-hospital-textMuted'
-                      }`}
+                            ? 'bg-hospital-accent text-white'
+                            : 'bg-white/5 text-hospital-textMuted'
+                        }`}
                     >
                       <StageIcon className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-xs sm:text-sm font-semibold">{stage.label}</span>
+
+                    <span className="text-xs sm:text-sm font-semibold">
+                      {stage.label}
+                    </span>
                   </div>
 
                   <div>
@@ -160,11 +363,33 @@ export const ProcessingPage: React.FC = () => {
             })}
           </div>
 
-          {/* Auto transition message */}
-          <p className="mt-8 text-xs text-hospital-textMuted/70 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-hospital-accent animate-ping" />
-            Report generation will complete automatically in a few seconds...
-          </p>
+          {/* Actions after an error */}
+          {errorMessage ? (
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 w-full max-w-md">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-hospital-accent px-5 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Retry Analysis
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoBack}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-hospital-border px-5 py-3 text-sm font-semibold text-hospital-textLight hover:bg-white/5 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Go Back
+              </button>
+            </div>
+          ) : (
+            <p className="mt-8 text-xs text-hospital-textMuted/70 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-hospital-accent animate-ping" />
+              Please wait for backend analysis to complete. The report will open automatically when a valid result is returned.
+            </p>
+          )}
         </motion.div>
       </main>
     </div>
