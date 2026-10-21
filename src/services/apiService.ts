@@ -312,34 +312,44 @@ const getReportDateTime = (
 
 };
 
-const getStatusDescription = (status: string): string => {
-
-  const normalized = status.trim().toLowerCase();
+const normalizeReportStatus = (status: string): FeedbackReport['status'] => {
+  const normalized = status
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
 
   switch (normalized) {
-
     case 'excellent':
-
-      return 'The calculated score falls in the configured Excellent range. Review the individual category scores and patient comments.';
-
+      return 'EXCELLENT';
     case 'good':
-
-      return 'The calculated score falls in the configured Good range. Review the individual category scores and any reported concerns.';
-
+      return 'GOOD';
+    case 'needs attention':
     case 'needs improvement':
-
-      return 'The calculated score falls in the configured Needs Improvement range. Review the patient concerns and suggestions.';
-
+      return 'NEEDS_ATTENTION';
     case 'poor':
-
-      return 'The calculated score falls in the configured Poor range. Review the reported concerns promptly.';
-
+      return 'POOR';
     default:
-
-      return 'Review the calculated scores and the patient responses before drawing conclusions.';
-
+      throw new Error(`The backend returned an unsupported report status: ${status}`);
   }
+};
 
+const getStatusDescription = (status: string): string => {
+  const normalized = status.trim().toLowerCase().replace(/[_-]+/g, ' ');
+
+  switch (normalized) {
+    case 'excellent':
+      return 'The calculated score falls in the configured Excellent range. Review the individual category scores and patient comments.';
+    case 'good':
+      return 'The calculated score falls in the configured Good range. Review the individual category scores and any reported concerns.';
+    case 'needs improvement':
+    case 'needs attention':
+      return 'The calculated score falls in the configured Needs Improvement range. Review the patient concerns and suggestions.';
+    case 'poor':
+      return 'The calculated score falls in the configured Poor range. Review the reported concerns promptly.';
+    default:
+      return 'Review the calculated scores and the patient responses before drawing conclusions.';
+  }
 };
 
 export const apiService = {
@@ -580,8 +590,6 @@ export const apiService = {
         timestamp:
 
           answer.audioTimestamp ||
-
-          answer.timestamp ||
 
           new Date().toISOString(),
 
@@ -831,7 +839,7 @@ export const apiService = {
 
         overallScore,
 
-        status: data.status.trim().toUpperCase(),
+        status: normalizeReportStatus(data.status),
 
         statusDescription: getStatusDescription(data.status),
 
